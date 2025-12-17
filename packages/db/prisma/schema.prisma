@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ImportStatus {
+  STAGED
+  TRANSFORMED
+  FAILED
+}
+
+model ImportBatch {
+  id              String       @id @default(cuid())
+  createdAt       DateTime     @default(now())
+  reportType      String
+  mappingVersion  String
+  fileName        String?
+  headerSignature String
+  headerColumns   Json
+  unknownColumns  Json?
+  status          ImportStatus @default(STAGED)
+
+  errorCount      Int          @default(0)
+  warnCount       Int          @default(0)
+  stagedCount     Int          @default(0)
+  canonicalCount  Int          @default(0)
+
+  stagingRows     StagingRow[]
+  partsSalesLines PartsSalesLine[]
+}
+
+model StagingRow {
+  id        String     @id @default(cuid())
+  createdAt DateTime   @default(now())
+  batchId   String
+  rowIndex  Int
+  data      Json
+  unknown   Json?
+
+  batch     ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+}
+
+model PartsSalesLine {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+
+  batchId     String
+  branchCode  String
+  checkoutNo  String
+  itemId      String
+
+  workOrderNo  String?
+  workOrderKey String?
+
+  partNo      String
+  partName    String?
+  qty         Decimal?
+  saleAmount  Decimal?
+  costAmount  Decimal?
+
+  advisorName String?
+  salesName   String?
+
+  batch       ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@unique([branchCode, checkoutNo, itemId])
+  @@index([workOrderKey])
+  @@index([partNo])
+}
