@@ -1,1 +1,7 @@
-pnpm -C apps/web add @ops/db@workspace:* @ops/importer@workspace:*
+{
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start -p $PORT"
+  }
+}
